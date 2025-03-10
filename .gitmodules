@@ -1,0 +1,3 @@
+[submodule "src-wry"]
+	path = src-wry
+	url = https://github.com/longht021189/wry.git

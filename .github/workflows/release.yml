@@ -11,12 +11,13 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Install Bun
-        run: powershell -c "irm bun.sh/install.ps1 | iex"
+        run: |
+          curl -fsSL https://bun.sh/install | bash
+          echo "C:\Users\runneradmin\.bun\bin" >> $GITHUB_PATH
       - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
       - name: Install Dependencies
-        shell: cmd
-        run: bun i
+        run: bun install
       - name: Build and Release Tauri
         uses: tauri-apps/tauri-action@v0
         env:

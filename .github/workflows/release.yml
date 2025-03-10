@@ -22,10 +22,10 @@ jobs:
           bun i
       - name: Build and Release Tauri
         uses: tauri-apps/tauri-action@v0
-        working-directory: ${{ github.workspace }}/src-tauri
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
+          projectPath: ${{ github.workspace }}/src-tauri
           tagName: v0.1.0
           releaseName: "Release v0.1.0"
           releaseBody: "Windows-only Tauri app with Bun."

@@ -15,6 +15,7 @@ jobs:
       - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
       - name: Install Dependencies
+        shell: cmd
         run: bun i
       - name: Build and Release Tauri
         uses: tauri-apps/tauri-action@v0

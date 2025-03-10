@@ -17,9 +17,12 @@ jobs:
       - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
       - name: Install Dependencies
-        run: bun i
+        run: |
+          git submodule update --init --recursive
+          bun i
       - name: Build and Release Tauri
         uses: tauri-apps/tauri-action@v0
+        working-directory: ${{ github.workspace }}/src-tauri
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:

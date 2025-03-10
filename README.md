@@ -10,6 +10,8 @@ Welcome to **Game Maps**, an interactive tool for gamers to explore detailed map
 - **Sync Progress**: Seamlessly sync saved locations with Map Genie’s website.
 - **User-Friendly Design**: Intuitive interface designed with gamers in mind.
 
+![Map Genie PRO](./.github/images/Map-Genie-PRO.png "Map Genie PRO on Windows")
+
 ## Installation
 
 ### Windows

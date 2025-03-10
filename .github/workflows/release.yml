@@ -1,0 +1,28 @@
+name: Release Windows App
+
+on:
+  push:
+    branches:
+      - dev
+
+jobs:
+  release:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install Bun
+        run: powershell -c "irm bun.sh/install.ps1 | iex"
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+      - name: Install Dependencies
+        run: bun i
+      - name: Build and Release Tauri
+        uses: tauri-apps/tauri-action@v0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tagName: v0.1.0
+          releaseName: "Release v0.1.0"
+          releaseBody: "Windows-only Tauri app with Bun."
+          releaseDraft: true
+          targets: 'exe'

@@ -1,0 +1,33 @@
+name: Release Windows App
+
+on:
+  push:
+    tags:
+      - v*
+
+jobs:
+  release:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+      - name: Install Dependencies
+        run: |
+          git submodule update --init --recursive
+          bun i
+      - name: Build and Release Tauri
+        uses: tauri-apps/tauri-action@v0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          projectPath: ${{ github.workspace }}/src-tauri
+          tagName: ${{ github.ref_name }}
+          releaseName: "Release ${{ github.ref_name }}"
+          releaseBody: "Windows-only Tauri app with Bun."
+          releaseDraft: true
+          targets: 'exe'

@@ -6,10 +6,9 @@ namespace leveldb {
 }
 
 struct Data {
-    Data();
+    static Data* start();
     virtual ~Data();
 
-    bool init();
     bool write(std::string key, std::string value);
     bool read(std::string key, std::string &value);
 

@@ -9,6 +9,7 @@
       ]
     },
     "yalantinglibs",
-    "leveldb"
+    "leveldb",
+    "catch2"
   ]
 }

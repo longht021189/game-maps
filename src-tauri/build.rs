@@ -8,6 +8,7 @@ fn main() {
     let dst = cmake::Config::new("../src-native")
         .generator("Visual Studio 17 2022")
         .no_default_flags(true)
+        .configure_arg("-DGAME_MAPS_CORE_RELEASE=ON")
         .build_target("game-maps-core")
         .profile("Release")
         .build();

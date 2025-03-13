@@ -1,25 +1,25 @@
 #include "keyboard.h"
 #include <windows.h>
-#include <thread>
 #include <iostream>
 
 #define VK_KEY_Y 0x59
-#define VK_KEY_W 0x57
-#define VK_ESCAPE 0x1B
+#define SCANCODE_W 0x11
+#define SCANCODE_SHIFT_LEFT 0x2A
 
-bool isWKeyDown = false; // Tracks whether 'W' is currently pressed
+volatile bool isWKeyDown = false;
 
 struct KeyboardData {
     HHOOK keyboardHook = nullptr;
-    std::thread *thread = nullptr;
+    HANDLE hThread = nullptr;
+    DWORD threadId;
     virtual ~KeyboardData();
 };
 
-void SendKey(WORD keyCode, bool keyDown) {
+void SendKey(DWORD scanCode, bool keyDown) {
     INPUT input = {0};
     input.type = INPUT_KEYBOARD;
-    input.ki.wVk = keyCode;
-    input.ki.dwFlags = keyDown ? 0 : KEYEVENTF_KEYUP;
+    input.ki.wScan = scanCode;
+    input.ki.dwFlags = keyDown ? KEYEVENTF_SCANCODE : (KEYEVENTF_SCANCODE | KEYEVENTF_KEYUP);
     SendInput(1, &input, sizeof(INPUT));
 }
 
@@ -31,24 +31,17 @@ LRESULT CALLBACK LowLevelKeyboardProc(int nCode, WPARAM wParam, LPARAM lParam) {
         if (pkbhs->vkCode == VK_KEY_Y) {
             if (!isWKeyDown) {
                 std::cout << "'Y' pressed: Sending 'W' key down" << std::endl;
-                SendKey(VK_KEY_W, true);  // Send 'W' down
+                SendKey(SCANCODE_W, true);
+                SendKey(SCANCODE_SHIFT_LEFT, true);
                 isWKeyDown = true;
             } else {
                 std::cout << "'Y' pressed again: Sending 'W' key up" << std::endl;
-                SendKey(VK_KEY_W, false); // Send 'W' up
+                SendKey(SCANCODE_W, false);
+                SendKey(SCANCODE_SHIFT_LEFT, false);
                 isWKeyDown = false;
             }
             return 1; // Block the 'Y' key from propagating
         }
-        // Exit on Esc
-        // else if (pkbhs->vkCode == VK_ESCAPE) {
-        //     std::cout << "Esc pressed. Exiting...\n";
-        //     if (isWKeyDown) {
-        //         SendKey(VK_KEY_W, false); // Release 'W' if still down
-        //     }
-        //     PostQuitMessage(0);
-        //     return 1;
-        // }
     }
     return CallNextHookEx(NULL, nCode, wParam, lParam);
 }
@@ -57,33 +50,50 @@ Keyboard::Keyboard(KeyboardData* d): data(d) {}
 
 Keyboard::~Keyboard() {
     is_running = false;
+    SendKey(SCANCODE_W, true);
     delete data;
 }
 
 KeyboardData::~KeyboardData() {
-    // TODO Check stop thread
-    // if (thread->joinable()) {
-    //     thread->join();
-    // }
-    // delete thread;
+    if (TerminateThread(hThread, 1)) {
+        std::cout << "Thread forcibly terminated!" << std::endl;
+    } else {
+        std::cout << "Failed to terminate thread. Error: " << GetLastError() << std::endl;
+    }
+
+    // Wait for the thread to complete
+    WaitForSingleObject(hThread, INFINITE);
+
+    // Get the thread's exit code
+    DWORD exitCode;
+    GetExitCodeThread(hThread, &exitCode);
+    std::cout << "Main thread: Thread terminated with exit code " << exitCode << std::endl;
+
+    // Clean up the thread handle
+    CloseHandle(hThread);
 
     UnhookWindowsHookEx(keyboardHook);
 }
 
-void Keyboard::loop() {
+DWORD WINAPI loop(LPVOID lpParam) {
     std::cout << "[Keyboard::loop] Start message loop" << std::endl;
+
+    Keyboard* keyboard = (Keyboard*)lpParam;
     
     MSG msg;
-    while (GetMessage(&msg, NULL, 0, 0) && is_running) {
+    while (GetMessage(&msg, NULL, 0, 0) && keyboard->is_running) {
         TranslateMessage(&msg);
         DispatchMessage(&msg);
     }
     if (isWKeyDown) {
-        SendKey(VK_KEY_W, false); // Release 'W' if still down
+        SendKey(SCANCODE_W, false); // Release 'W' if still down
+        SendKey(SCANCODE_SHIFT_LEFT, false);
         isWKeyDown = false;
     }
 
     std::cout << "[Keyboard::loop] End message loop" << std::endl;
+
+    return 0;
 }
 
 Keyboard* Keyboard::start() {
@@ -97,7 +107,23 @@ Keyboard* Keyboard::start() {
     Keyboard *keyboard = new Keyboard(data);
     keyboard->is_running = true;
     data->keyboardHook = keyboardHook;
-    data->thread = new std::thread(&Keyboard::loop, keyboard);
+    data->hThread = CreateThread(
+        NULL,              // Default security attributes
+        0,                 // Default stack size
+        loop,              // Thread function name
+        keyboard,          // Parameter to pass to thread
+        0,                 // Creation flags (0 = run immediately)
+        &data->threadId    // Pointer to receive thread ID
+    );
+
+    if (data->hThread == nullptr) {
+        delete keyboard;
+        std::cout << "Failed to create thread. Error: " << GetLastError() << std::endl;
+        return nullptr;
+    }
+
+    std::cout << "Main thread: Created thread with ID " << data->threadId << std::endl;
+
 
     return keyboard;
 }

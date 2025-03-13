@@ -6,11 +6,10 @@ struct KeyboardData;
 struct Keyboard {
     static Keyboard* start();
     virtual ~Keyboard();
+    volatile bool is_running = false;
 private:
     Keyboard(KeyboardData* d);
-    void loop();
     KeyboardData* data;
-    bool is_running = false;
 };
 
 #endif // GAME_MAPS_CORE_KEYBOARD_H

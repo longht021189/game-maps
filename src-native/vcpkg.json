@@ -1,0 +1,15 @@
+{
+  "dependencies": [
+    {
+      "name": "curl",
+      "features": [
+        "zstd",
+        "ssl",
+        "http2"
+      ]
+    },
+    "yalantinglibs",
+    "catch2",
+    "leveldb"
+  ]
+}

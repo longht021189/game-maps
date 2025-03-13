@@ -1,0 +1,35 @@
+name: Test Vcpkg
+
+on:
+  push:
+    branches:
+      - dev
+
+jobs:
+  release:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Checkout vcpkg
+        run: git clone https://github.com/microsoft/vcpkg.git
+      - name: Setup vcpkg
+        run: |
+          cd vcpkg
+          .\bootstrap-vcpkg.bat
+      - name: Install Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+      - name: Install Dependencies
+        run: |
+          git submodule update --init --recursive
+          bun i
+      - name: Build and Release Tauri
+        env:
+          GITHUB_TOKEN: ${{ secrets.RELEASE_TOKEN }}
+          VCPKG_ROOT: ${{ github.workspace }}/vcpkg
+          PATH: ${{ github.workspace }}/vcpkg:$PATH
+        run: |
+          bun run tauri build

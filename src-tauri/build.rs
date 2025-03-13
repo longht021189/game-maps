@@ -19,9 +19,9 @@ fn main() {
     println!("cargo:rustc-link-lib=static=game-maps-core");
     println!("cargo:rustc-link-lib=static=leveldb");
     println!("cargo:rustc-link-lib=static=libcurl");
-    println!("cargo:rustc-link-lib=static=nghttp2");
-    println!("cargo:rustc-link-lib=static=zlib");
-    println!("cargo:rustc-link-lib=static=zstd");
+    println!("cargo:rustc-link-lib=static=nghttp2"); // libcurl
+    println!("cargo:rustc-link-lib=static=zlib"); // libcurl
+    println!("cargo:rustc-link-lib=static=zstd"); // libcurl
     println!("cargo:rustc-link-lib=user32"); // Windows API dependency
     println!("cargo:rustc-link-lib=ws2_32"); // libcurl
     println!("cargo:rustc-link-lib=bcrypt"); // libcurl

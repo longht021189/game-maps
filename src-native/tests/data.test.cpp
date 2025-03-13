@@ -19,6 +19,7 @@ TEST_CASE("Check Data", "[data]") {
     data = Data::start();
     REQUIRE_FALSE(data == nullptr);
 
+    value = "";
     result = data->read("test", value);
     REQUIRE(result == true);
     REQUIRE(value == "test-1234");

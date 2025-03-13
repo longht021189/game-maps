@@ -1,39 +1,72 @@
 #include <string>
 #include "data.h"
-#include <leveldb/db.h>
+#include "leveldb.h"
 #include <iostream>
+#include <filesystem>
+#include <sstream>
+#include <fstream>
 
 #ifndef GAME_MAPS_DB_PATH
     #define GAME_MAPS_DB_PATH "game-maps-db"
 #endif // GAME_MAPS_DB_PATH
 
-Data::~Data() {
-    delete db;
-}
+namespace fs = std::filesystem;
 
-bool Data::write(std::string key, std::string value) {
-    leveldb::Status status = db->Put(leveldb::WriteOptions(), key.c_str(), value.c_str());
-    return status.ok();
-}
+struct Filesystem final : Data {
+    Filesystem(const char* path): file_dir(path) {}
 
-bool Data::read(std::string key, std::string &value) {
-    leveldb::Status status = db->Get(leveldb::ReadOptions(), key.c_str(), &value);
-    return status.ok();
-}
+    bool write(std::string key, std::string value) override {
+        if (!fs::exists(file_dir)) {
+            try {
+                fs::create_directories(file_dir);
+            } catch (const fs::filesystem_error& e) {
+                std::cerr << "Error creating folder: " << e.what() << std::endl;
+                return false;
+            }
+        }
 
-Data* Data::start() {
-    leveldb::Options options;
-    options.create_if_missing = true;
+        std::stringstream ss;
+        ss << file_dir << "/" << key << ".txt";
 
-    leveldb::DB* db = nullptr;
-    leveldb::Status status = leveldb::DB::Open(options, GAME_MAPS_DB_PATH, &db);
-
-    if (!status.ok()) {
-        std::cout << "[Data::start] Unable to open/create database: " << status.ToString() << std::endl;
-        return nullptr;
+        std::ofstream outFile(ss.str());
+        if (outFile.is_open()) {
+            outFile << value;
+            outFile.close();
+            return true;
+        } else {
+            std::cerr << "Error: Unable to open file for writing" << std::endl;
+            return false;
+        }
     }
 
-    Data *data = new Data();
-    data->db = db;
-    return data;
+    bool read(std::string key, std::string &value) override {
+        std::stringstream ss;
+        ss << file_dir << "/" << key << ".txt";
+
+        std::ifstream inFile(ss.str());
+        if (inFile.is_open()) {
+            std::string line;
+            bool first = true;
+            while (std::getline(inFile, line)) {
+                if (!first) {
+                    value += "\n";
+                }
+
+                first = false;
+                value += line;
+            }
+            inFile.close();
+            return true;
+        } else {
+            std::cerr << "Key " << key << " does not exist or cannot be opened" << std::endl;
+            return false;
+        }
+    }
+
+    std::string file_dir;
+};
+
+Data* Data::start() {
+    // return newLevelDB(GAME_MAPS_DB_PATH);
+    return new Filesystem(GAME_MAPS_DB_PATH);
 }

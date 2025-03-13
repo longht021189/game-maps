@@ -83,6 +83,7 @@ extern "C" char* mapgenie_add_note(
 
     std::string output;
     std::string note(body, body_len);
+
     mapgenie_data->add_note(game_id, map_id, note, output);
 
     char* buffer = (char*)malloc(output.size() + 1);
@@ -107,6 +108,7 @@ extern "C" char* mapgenie_update_note(
     std::string output;
     std::string note(body, body_len);
     std::string note_id_str(note_id, note_id_len);
+
     mapgenie_data->update_note(game_id, map_id, note_id_str, note, output);
     
     char* buffer = (char*)malloc(output.size() + 1);

@@ -4,6 +4,8 @@ on:
   push:
     tags:
       - v*
+    branches:
+      - dev
 
 jobs:
   release:
@@ -32,8 +34,10 @@ jobs:
           VCPKG_ROOT: ${{ github.workspace }}/vcpkg
         with:
           projectPath: ${{ github.workspace }}/src-tauri
-          tagName: ${{ github.ref_name }}
-          releaseName: "Release ${{ github.ref_name }}"
+          # tagName: ${{ github.ref_name }}
+          # releaseName: "Release ${{ github.ref_name }}"
+          tagName: "v0.1.0"
+          releaseName: "Release v0.1.0"
           releaseBody: "Windows-only Tauri app with Bun."
           releaseDraft: true
           targets: 'exe'

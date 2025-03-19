@@ -10,7 +10,6 @@ struct Keyboard {
 private:
     Keyboard(KeyboardData* d);
     KeyboardData* data;
-    bool is_running = false;
 };
 
 #endif // GAME_MAPS_CORE_KEYBOARD_H

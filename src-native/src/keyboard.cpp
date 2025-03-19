@@ -6,8 +6,9 @@
 #define VK_KEY_W 0x57
 #define VK_ESCAPE 0x1B
 #define SCANCODE_W 0x11
+#define SCANCODE_SHIFT_LEFT 0x2A
 
-bool isWKeyDown = false; // Tracks whether 'W' is currently pressed
+volatile bool isWKeyDown = false;
 
 struct KeyboardData {
     HHOOK keyboardHook;
@@ -17,10 +18,11 @@ struct KeyboardData {
     virtual ~KeyboardData();
 };
 
-void SendKey(WORD keyCode, bool keyDown) {
+void SendKey(DWORD scanCode, bool keyDown) {
     INPUT input = {0};
     input.type = INPUT_KEYBOARD;
-    input.ki.wVk = keyCode;
+    // input.ki.wVk = keyCode;
+    input.ki.wScan = scanCode;
     input.ki.dwFlags = keyDown ? KEYEVENTF_SCANCODE : (KEYEVENTF_SCANCODE | KEYEVENTF_KEYUP);
     SendInput(1, &input, sizeof(INPUT));
 }
@@ -32,27 +34,14 @@ LRESULT CALLBACK LowLevelKeyboardProc(int nCode, WPARAM wParam, LPARAM lParam) {
         // Check for 'Y' key press
         if (pkbhs->vkCode == VK_KEY_Y) {
             if (!isWKeyDown) {
-                std::cout << "'Y' pressed: Sending 'W' key down" << std::endl;
                 SendKey(SCANCODE_W, true);
-                // SendKey(SCANCODE_SHIFT_LEFT, true);
                 isWKeyDown = true;
             } else {
-                std::cout << "'Y' pressed again: Sending 'W' key up" << std::endl;
                 SendKey(SCANCODE_W, false);
-                // SendKey(SCANCODE_SHIFT_LEFT, false);
                 isWKeyDown = false;
             }
             return 1; // Block the 'Y' key from propagating
         }
-        // Exit on Esc
-        // else if (pkbhs->vkCode == VK_ESCAPE) {
-        //     std::cout << "Esc pressed. Exiting...\n";
-        //     if (isWKeyDown) {
-        //         SendKey(VK_KEY_W, false); // Release 'W' if still down
-        //     }
-        //     PostQuitMessage(0);
-        //     return 1;
-        // }
     }
     return CallNextHookEx(NULL, nCode, wParam, lParam);
 }
@@ -67,6 +56,7 @@ Keyboard::Keyboard(KeyboardData* d): data(d) {}
 
 Keyboard::~Keyboard() {
     is_running = false;
+    SendKey(SCANCODE_W, true);
     delete data;
 }
 
@@ -98,16 +88,16 @@ KeyboardData::~KeyboardData() {
     UnhookWindowsHookEx(keyboardHook);
 }
 
-void Keyboard::loop() {
-    std::cout << "[Keyboard::loop] Start message loop" << std::endl;
+DWORD WINAPI loop(LPVOID lpParam) {
+    Keyboard* keyboard = (Keyboard*)lpParam;
     
     MSG msg;
-    while (GetMessage(&msg, NULL, 0, 0) && is_running) {
+    while (GetMessage(&msg, NULL, 0, 0) && keyboard->is_running) {
         TranslateMessage(&msg);
         DispatchMessage(&msg);
     }
 
-    std::cout << "[Keyboard::loop] End message loop" << std::endl;
+    return 0;
 }
 
 Keyboard* Keyboard::start() {

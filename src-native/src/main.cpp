@@ -5,11 +5,14 @@
 #include "mapgenie-data.h"
 #include "keyboard.h"
 
+#define EXPORT __declspec(dllexport)
+#include "main.h"
+
 Data *database = nullptr;
 MapgenieData *mapgenie_data = nullptr;
 Keyboard *keyboard = nullptr;
 
-extern "C" void core_start() {
+extern "C" EXPORT void core_start() {
     if (database == nullptr) {
         database = Data::start();
     }
@@ -21,7 +24,7 @@ extern "C" void core_start() {
     }
 }
 
-extern "C" void core_end() {
+extern "C" EXPORT void core_end() {
     if (mapgenie_data != nullptr) {
         delete mapgenie_data;
         mapgenie_data = nullptr;
@@ -36,7 +39,7 @@ extern "C" void core_end() {
     }
 }
 
-extern "C" void mapgenie_add_location(uint64_t game_id, uint64_t map_id, uint64_t location_id) {
+extern "C" EXPORT void mapgenie_add_location(uint64_t game_id, uint64_t map_id, uint64_t location_id) {
     if (mapgenie_data == nullptr) {
         return;
     }
@@ -44,7 +47,7 @@ extern "C" void mapgenie_add_location(uint64_t game_id, uint64_t map_id, uint64_
     mapgenie_data->add_location(game_id, map_id, location_id);
 }
 
-extern "C" void mapgenie_remove_location(uint64_t game_id, uint64_t map_id, uint64_t location_id) {
+extern "C" EXPORT void mapgenie_remove_location(uint64_t game_id, uint64_t map_id, uint64_t location_id) {
     if (mapgenie_data == nullptr) {
         return;
     }
@@ -52,7 +55,7 @@ extern "C" void mapgenie_remove_location(uint64_t game_id, uint64_t map_id, uint
     mapgenie_data->remove_location(game_id, map_id, location_id);
 }
 
-extern "C" char* mapgenie_get_map_data(uint64_t game_id, uint64_t map_id, size_t* length) {
+extern "C" EXPORT char* mapgenie_get_map_data(uint64_t game_id, uint64_t map_id, size_t* length) {
     if (mapgenie_data == nullptr) {
         return nullptr;
     }
@@ -67,11 +70,11 @@ extern "C" char* mapgenie_get_map_data(uint64_t game_id, uint64_t map_id, size_t
     return buffer;
 }
 
-extern "C" void free_buffer(char* ptr) {
+extern "C" EXPORT void free_buffer(char* ptr) {
     free(ptr);
 }
 
-extern "C" char* mapgenie_add_note(
+extern "C" EXPORT char* mapgenie_add_note(
     uint64_t game_id, 
     uint64_t map_id, 
     const char* body, 
@@ -93,7 +96,7 @@ extern "C" char* mapgenie_add_note(
     return buffer;
 }
 
-extern "C" char* mapgenie_update_note(
+extern "C" EXPORT char* mapgenie_update_note(
     uint64_t game_id, 
     uint64_t map_id, 
     const char* body, 
@@ -118,7 +121,7 @@ extern "C" char* mapgenie_update_note(
     return buffer;
 }
 
-extern "C" void mapgenie_delete_note(
+extern "C" EXPORT void mapgenie_delete_note(
     uint64_t game_id,
     uint64_t map_id,
     const char* note_id, 

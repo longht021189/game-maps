@@ -1,3 +1,5 @@
 /build
 /.vscode
 /game-maps-db
+/cmake-build-*
+/.idea

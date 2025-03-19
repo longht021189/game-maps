@@ -13,7 +13,8 @@ set(CMAKE_CXX_EXTENSIONS OFF) # Optional: Ensures standard compliance (no compil
 file(GLOB_RECURSE SOURCES ${CMAKE_CURRENT_SOURCE_DIR}/src/*.cpp)
 
 if (GAME_MAPS_CORE_RELEASE)
-    add_library(game-maps-core STATIC ${SOURCES})
+    add_library(game-maps-core SHARED ${SOURCES})
+    target_compile_definitions(game-maps-core PRIVATE GAME_MAPS_CORE_RELEASE)
 else ()
     file(GLOB_RECURSE SOURCES_TESTS ${CMAKE_CURRENT_SOURCE_DIR}/tests/*.cpp)
     add_executable(game-maps-core ${SOURCES} ${SOURCES_TESTS})

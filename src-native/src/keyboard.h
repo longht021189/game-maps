@@ -6,9 +6,9 @@ struct KeyboardData;
 struct Keyboard {
     static Keyboard* start();
     virtual ~Keyboard();
+    void loop();
 private:
     Keyboard(KeyboardData* d);
-    void loop();
     KeyboardData* data;
     bool is_running = false;
 };

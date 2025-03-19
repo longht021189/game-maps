@@ -7,3 +7,5 @@
 /gen/schemas
 
 /game-maps-db
+*.dll
+/.idea

@@ -1,15 +1,17 @@
-#include <string>
-#include "data.h"
-#include "leveldb.h"
-#include <iostream>
-#include <filesystem>
-#include <sstream>
-#include <fstream>
+#include "data.hpp"
+#include "data-leveldb.hpp"
 
 #ifndef GAME_MAPS_DB_PATH
     #define GAME_MAPS_DB_PATH "game-maps-db-v2"
 #endif // GAME_MAPS_DB_PATH
 
-Data* Data::start() {
-    return newLevelDB(GAME_MAPS_DB_PATH);
+Data* Data::instance = nullptr;
+
+Data* Data::get_instance() {
+  if (instance) {
+    return instance;
+  }
+
+  instance = newLevelDB(GAME_MAPS_DB_PATH);
+  return instance;
 }

@@ -1,5 +1,4 @@
-#include <string>
-#include "mapgenie-data.h"
+#include "mapgenie-data.hpp"
 #include <ylt/struct_json/json_writer.h>
 #include <ylt/struct_json/json_reader.h>
 #include <vector>
@@ -7,18 +6,18 @@
 #include <random>
 
 struct MapgenieMapNoteInput {
-    uint64_t map_id;
+    uint64_t map_id{};
     std::string title;
     std::string description;
     std::optional<std::string> color;
-    double latitude;
-    double longitude;
+    double latitude{};
+    double longitude{};
 };
 
 struct MapgenieMapNote : MapgenieMapNoteInput {
     std::string id;
     std::string created_at;
-    uint64_t user_id;
+    uint64_t user_id{};
 };
 
 struct MapgenieMapData {
@@ -32,22 +31,19 @@ YLT_REFL(MapgenieMapNoteInput, map_id, title, description, color, latitude, long
 YLT_REFL(MapgenieMapNote, map_id, title, description, color, latitude, longitude, id, created_at, user_id);
 YLT_REFL(MapgenieMapData, locations, game_id, map_id, notes);
 
-MapgenieData::MapgenieData(Data *d)
-    : data(d)
+MapgenieData::MapgenieData()
+    : data(Data::get_instance())
 {}
 
-MapgenieData::~MapgenieData() {}
-
 void MapgenieData::get_data(
-    uint64_t game_id, 
-    uint64_t map_id, 
+    const uint64_t game_id,
+    const uint64_t map_id,
     MapgenieMapData &value
-) {
+) const {
     std::stringstream ss{};
     ss << "mapgenie_mapdata_" << game_id << "_" << map_id;
 
-    std::string text;
-    if (data->read(ss.str(), text)) {
+    if (std::string text; data->read(ss.str(), text)) {
         std::error_code error;
         struct_json::from_json(value, text, error);
         if (error.value() != 0) {
@@ -63,10 +59,10 @@ void MapgenieData::get_data(
 }
 
 void MapgenieData::set_data(
-    uint64_t game_id, 
-    uint64_t map_id, 
+    const uint64_t game_id,
+    const uint64_t map_id,
     MapgenieMapData &value
-) {
+) const {
     std::stringstream ss{};
     ss << "mapgenie_mapdata_" << game_id << "_" << map_id;
 
@@ -76,10 +72,10 @@ void MapgenieData::set_data(
 }
 
 void MapgenieData::add_location(
-    uint64_t game_id, 
-    uint64_t map_id, 
-    uint64_t location_id
-) {
+    const uint64_t game_id,
+    const uint64_t map_id,
+    const uint64_t location_id
+) const {
     MapgenieMapData value;
     get_data(game_id, map_id, value);
     value.locations.push_back(location_id);
@@ -87,10 +83,10 @@ void MapgenieData::add_location(
 }
 
 void MapgenieData::remove_location(
-    uint64_t game_id, 
-    uint64_t map_id, 
-    uint64_t location_id
-) {
+    const uint64_t game_id,
+    const uint64_t map_id,
+    const uint64_t location_id
+) const {
     MapgenieMapData value;
     get_data(game_id, map_id, value);
     value.locations.erase(
@@ -100,16 +96,16 @@ void MapgenieData::remove_location(
 }
 
 void MapgenieData::get_map_data(
-    uint64_t game_id, 
-    uint64_t map_id, 
+    const uint64_t game_id,
+    const uint64_t map_id,
     std::string& output
-) {
+) const {
     MapgenieMapData value;
     get_data(game_id, map_id, value);
     struct_json::to_json(value, output);
 }
 
-std::string generate_random_id(int count) {
+std::string generate_random_id(const int count) {
     // Character sets
     const std::string character_sets = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
 
@@ -129,9 +125,9 @@ std::string generate_random_id(int count) {
 void MapgenieData::add_note(
     uint64_t game_id, 
     uint64_t map_id, 
-    std::string note, 
+    const std::string& note,
     std::string& output
-) {
+) const {
     MapgenieMapNoteInput input;
     struct_json::from_json(input, note);
 
@@ -158,9 +154,9 @@ void MapgenieData::update_note(
     uint64_t game_id, 
     uint64_t map_id, 
     std::string note_id, 
-    std::string note, 
+    const std::string& note,
     std::string& output
-) {
+) const {
     MapgenieMapData mapdata;
     get_data(game_id, map_id, mapdata);
 
@@ -192,14 +188,15 @@ void MapgenieData::update_note(
 }
 
 void MapgenieData::delete_note(
-    uint64_t game_id, 
-    uint64_t map_id, 
+    const uint64_t game_id,
+    const uint64_t map_id,
     std::string note_id
-) {
+) const {
     MapgenieMapData mapdata;
     get_data(game_id, map_id, mapdata);
 
-    auto it = std::find_if(mapdata.notes.begin(), mapdata.notes.end(),
+    const auto it = std::ranges::find_if(
+        mapdata.notes,
         [&note_id](const MapgenieMapNote& p) { return p.id == note_id; });
 
     if (it != mapdata.notes.end()) {

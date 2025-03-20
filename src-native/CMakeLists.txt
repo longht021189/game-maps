@@ -20,14 +20,21 @@ else ()
     add_executable(game-maps-core ${SOURCES} ${SOURCES_TESTS})
     find_package(Catch2 CONFIG REQUIRED)
     target_link_libraries(game-maps-core PRIVATE Catch2::Catch2 Catch2::Catch2WithMain)
-    target_compile_definitions(game-maps-core PRIVATE GAME_MAPS_DB_PATH="${CMAKE_CURRENT_SOURCE_DIR}/game-maps-db")
+    target_compile_definitions(
+        game-maps-core PRIVATE
+            GAME_MAPS_DB_PATH="${CMAKE_CURRENT_SOURCE_DIR}/game-maps-db"
+            MAPGENIE_INJECT_JS_DIR="${CMAKE_CURRENT_SOURCE_DIR}/tests/data/dist/static/js"
+            MAPGENIE_INJECT_CSS_DIR="${CMAKE_CURRENT_SOURCE_DIR}/tests/data/dist/static/css"
+            MAPGENIE_INJECT_HTML_PATH="${CMAKE_CURRENT_SOURCE_DIR}/tests/data/map.html"
+            MAPGENIE_INJECT_HTML_PATH_OUT="${CMAKE_CURRENT_SOURCE_DIR}/tests/data/map_out.html"
+    )
 endif ()
 
 # Features
 target_compile_features(game-maps-core PRIVATE cxx_std_20)
 
 # Includes
-target_include_directories(game-maps-core PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
+target_include_directories(game-maps-core PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src ${CMAKE_CURRENT_SOURCE_DIR}/include)
 
 # Link with libs
 find_package(CURL REQUIRED)

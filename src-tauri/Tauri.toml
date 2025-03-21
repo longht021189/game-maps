@@ -1,0 +1,37 @@
+# Product metadata
+productName = "game-maps"
+version = "0.3.0"
+identifier = "com.game-maps.app"
+
+# Build configuration
+[build]
+devUrl = "https://mapgenie.io"
+beforeDevCommand = "bun run build"
+frontendDist = "https://mapgenie.io"
+beforeBuildCommand = "bun run build"
+
+# App configuration
+[[app.windows]]
+title = "game-maps"
+width = 800
+height = 600
+
+# Bundle configuration
+[bundle]
+active = true
+targets = "all"
+resources = [
+  "../dist", # ~ "_up_/dist"
+  "game-maps-core.dll",
+  "libcurl.dll",
+  "nghttp2.dll",
+  "zlib1.dll",
+  "zstd.dll"
+]
+icon = [
+  "icons/32x32.png",
+  "icons/128x128.png",
+  "icons/128x128@2x.png",
+  "icons/icon.icns",
+  "icons/icon.ico"
+]

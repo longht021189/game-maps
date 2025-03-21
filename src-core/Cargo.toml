@@ -1,0 +1,17 @@
+[package]
+name = "game-maps-core"
+version = "0.1.0"
+edition = "2021"
+
+[target."cfg(target_os = \"windows\")".dependencies]
+webview2-com = "0.36"
+windows-core = "0.60"
+
+[target."cfg(target_os = \"windows\")".dependencies.windows]
+version = "0.60"
+features = [
+    "Win32_Foundation"
+]
+
+[build-dependencies]
+bindgen = "0.71"

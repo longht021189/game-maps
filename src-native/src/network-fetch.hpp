@@ -1,0 +1,6 @@
+#ifndef GAME_MAPS_CORE_NETWORK_FETCH_HPP
+#define GAME_MAPS_CORE_NETWORK_FETCH_HPP
+
+#include "network.hpp"
+
+#endif // GAME_MAPS_CORE_NETWORK_FETCH_HPP

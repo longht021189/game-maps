@@ -1,29 +1,29 @@
-use tauri::RunEvent;
-
-extern "C" {
-    fn core_start();
-    fn core_end();
-}
+use tauri::{Manager, RunEvent};
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
+    if cfg!(dev) {
+        let project_dir = std::env::current_dir()
+            .unwrap()
+            .to_string_lossy()
+            .into_owned() + "/../dist";
+
+        unsafe {
+            game_maps_core::setup(project_dir.as_str());
+        }
+    }
+
     tauri::Builder::default()
-        .plugin(tauri_plugin_opener::init())
-        .build(tauri::generate_context!())
-        .expect("error while build tauri application")
-        .run(move |_app_handle, event| {
-            match event {
-                RunEvent::Ready => {
-                    unsafe {
-                        core_start();
-                    }
-                }
-                RunEvent::ExitRequested { .. } => {
-                    unsafe {
-                        core_end();
-                    }
-                }
-                _ => {}
+        .setup(|app| {
+            #[cfg(dev)]
+            {
+                let window = app.get_webview_window("main").unwrap();
+                window.open_devtools();
             }
-        });
+
+            Ok(())
+        })
+        .plugin(tauri_plugin_opener::init())
+        .run(tauri::generate_context!())
+        .expect("error while run tauri application");
 }

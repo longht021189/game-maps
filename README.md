@@ -2,6 +2,15 @@
 
 Welcome to **Game Maps**, an interactive tool for gamers to explore detailed maps powered by [Map Genie](https://mapgenie.io), with ads removed and pro features like unlimited save locations unlocked. I’m LongHT, a developer currently seeking new job opportunities, and I built this app for **Windows** as a passion project to showcase my skills—contributions welcome to expand it to other platforms!
 
+## Tech Stack and Why
+- Tauri Framework: A cross-platform framework written in Rust, enabling lightweight and secure desktop applications.
+- SolidJS: Chosen for its reactive programming model, which I enjoy (inspired by ReactiveX).
+- C/C++: I’m more familiar with it than Rust, and it has fewer restrictions, such as Rust’s borrow checker rules.
+- Catch2: A testing library for C/C++, used for writing unit tests.
+- cURL: My favorite HTTP client library for its reliability and versatility.
+- LevelDB: A simple, high-performance key-value database.
+- yaLanTingLibs: A collection of C++20 libraries; I specifically used struct_json for JSON handling.
+
 ## Features
 
 - **Interactive Maps**: Integrates with [Map Genie](https://mapgenie.io) for fan-made, detailed game maps.

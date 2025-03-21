@@ -161,7 +161,7 @@ CORE_PRIVATE NetworkResponse* core_mapgenie_network_override(const NetworkReques
         return &NetworkResponseErrors::get()->error_method_not_allowed;
     }
   }
-  if (request->m_parsed_url->path == "/api/v1/user/notes") {
+  if (starts_with(request->m_parsed_url->path, "/api/v1/user/notes") == 1) {
     MapgenieHeadersData headers_data {};
     get_headers_data(request, headers_data);
 

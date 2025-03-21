@@ -4,21 +4,23 @@
 #include "network-response.hpp"
 #include "network-fetch.hpp"
 #include "utils.hpp"
+#include "app.hpp"
 #include <fstream>
 #include <sstream>
 #include <filesystem>
 #include <iostream>
 
-#ifndef MAPGENIE_INJECT_JS_DIR
-  #define MAPGENIE_INJECT_JS_DIR "_up_/dist/static/js"
-#endif
-#ifndef MAPGENIE_INJECT_CSS_DIR
-  #define MAPGENIE_INJECT_CSS_DIR "_up_/dist/static/css"
-#endif
-
 namespace fs = std::filesystem;
 
 MapgenieData mapgenie_data{};
+
+std::vector<std::string> mapgenie_network_filters = {
+  "https://mapgenie.io/*/maps/*",
+  "https://mapgenie.io/static/*",
+  "https://mapgenie.io/api/local/map-data/*",
+  "https://mapgenie.io/api/v1/user/notes",
+  "https://mapgenie.io/api/v1/user/locations/*"
+};
 
 struct MapgenieHeadersData {
   uint64_t game_id;
@@ -75,9 +77,13 @@ CORE_PRIVATE void get_headers_data(const NetworkRequest* request, MapgenieHeader
 }
 
 CORE_PRIVATE void inject_sources(std::string& content) {
+  auto const js_dir = mapgenie_resources_path() + "/static/js";
+  auto const css_dir = mapgenie_resources_path() + "/static/css";
+
   std::string data;
-  get_scripts(MAPGENIE_INJECT_JS_DIR, ".js", data);
-  get_links(MAPGENIE_INJECT_CSS_DIR, ".css", data);
+  get_scripts(js_dir, ".js", data);
+  get_links(css_dir, ".css", data);
+
   const auto start = content.find("</head>");
   replace_range(content, "</head>", data + "</head>", start, start + 20);
 }
@@ -178,7 +184,7 @@ CORE_PRIVATE NetworkResponse* core_mapgenie_network_override(const NetworkReques
     return &NetworkResponseErrors::get()->error_method_not_allowed;
   }
   if (starts_with(request->m_parsed_url->path, "/static/") == 1) {
-    const auto filepath = "_up_/dist" + request->m_parsed_url->path;
+    const auto filepath = mapgenie_resources_path() + request->m_parsed_url->path;
 
     std::ifstream file(filepath);
     if (!file.is_open()) {
@@ -213,4 +219,8 @@ CORE_PRIVATE NetworkResponse* core_mapgenie_network_override(const NetworkReques
   }
 
   return nullptr;
+}
+
+CORE_PRIVATE const std::vector<std::string>& core_mapgenie_network_filters() {
+  return mapgenie_network_filters;
 }

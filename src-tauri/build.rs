@@ -1,5 +1,5 @@
 fn main() {
-    /*
+    println!("cargo:rerun-if-changed=../src-native/include/**/*");
     println!("cargo:rerun-if-changed=../src-native/src/**/*");
     println!("cargo:rerun-if-changed=../src-native/CMakeLists.txt");
     println!("cargo:rerun-if-changed=../src-native/vcpkg-configuration.json");
@@ -22,24 +22,8 @@ fn main() {
 
     std::fs::copy(game_maps_core_dll_in, game_maps_core_dll_out).unwrap();
 
-    // Link the library
     println!("cargo:rustc-link-search=native={}/build/Release", dst.display());
-    // println!("cargo:rustc-link-search=native={}/build/vcpkg_installed/x64-windows/lib", dst.display());
     println!("cargo:rustc-link-lib=game-maps-core");
-    println!("cargo:rustc-link-lib=user32"); // Windows API dependency
-    // println!("cargo:rustc-link-lib=static=leveldb");
-    // println!("cargo:rustc-link-lib=static=libcurl");
-    // println!("cargo:rustc-link-lib=static=nghttp2"); // libcurl
-    // println!("cargo:rustc-link-lib=static=zlib"); // libcurl
-    // println!("cargo:rustc-link-lib=static=zstd"); // libcurl
-    // println!("cargo:rustc-link-lib=ws2_32"); // libcurl
-    // println!("cargo:rustc-link-lib=bcrypt"); // libcurl
-    // println!("cargo:rustc-link-lib=advapi32"); // libcurl
-    // println!("cargo:rustc-link-lib=crypt32"); // libcurl
-
-    // println!("cargo:rustc-link-search=native=C:/Projects/game-maps/src-tauri");
-    // println!("cargo:rustc-link-lib=game-maps-core");
-    */
 
     // tauri build
     tauri_build::build();

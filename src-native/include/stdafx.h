@@ -13,7 +13,7 @@
   #define REMOVE_IN_CPP(x) x
 #endif
 
-#if WIN32
+// #if WIN32
   #ifdef GAME_MAPS_CORE_RELEASE
     #define CORE_PUBLIC __declspec(dllexport)
   #else
@@ -21,9 +21,9 @@
   #endif
 
   #define CORE_PRIVATE
-#else
-  #define CORE_PUBLIC __attribute__((visibility("default")))
-  #define CORE_PRIVATE __attribute__((visibility("hidden")))
-#endif
+// #else
+//   #define CORE_PUBLIC __attribute__((visibility("default")))
+//   #define CORE_PRIVATE __attribute__((visibility("hidden")))
+// #endif
 
 #endif // GAME_MAPS_CORE_STDAFX_H

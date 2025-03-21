@@ -8,7 +8,7 @@
     "check": "biome check --write",
     "dev": "rsbuild dev --port 3000",
     "format": "biome format --write",
-    "preview": "rsbuild preview",
+    "preview": "rsbuild preview --port 3000",
     "tauri": "tauri",
     "dev:rsdoctor": "cross-env RSDOCTOR=true rsbuild dev",
     "build:rsdoctor": "cross-env RSDOCTOR=true rsbuild build",

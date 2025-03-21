@@ -1,12 +1,12 @@
 # Product metadata
 productName = "game-maps"
-version = "0.2.0"
+version = "0.3.0"
 identifier = "com.game-maps.app"
 
 # Build configuration
 [build]
 devUrl = "https://mapgenie.io"
-beforeDevCommand = "bun run dev"
+beforeDevCommand = "bun run build"
 frontendDist = "https://mapgenie.io"
 beforeBuildCommand = "bun run build"
 
@@ -22,6 +22,7 @@ active = true
 targets = "all"
 resources = [
   "../dist", # ~ "_up_/dist"
+  "game-maps-core.dll",
 ]
 icon = [
   "icons/32x32.png",

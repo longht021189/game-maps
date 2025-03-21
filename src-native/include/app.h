@@ -4,7 +4,7 @@
 #include "stdafx.h"
 
 typedef struct {
-  const char* resources_path;
+  const char* mapgenie_resources_path;
 } AppConfig;
 
 CORE_EXTERN_C_BEGIN

@@ -23,8 +23,7 @@ else ()
     target_compile_definitions(
         game-maps-core PRIVATE
             GAME_MAPS_DB_PATH="${CMAKE_CURRENT_SOURCE_DIR}/game-maps-db"
-            MAPGENIE_INJECT_JS_DIR="${CMAKE_CURRENT_SOURCE_DIR}/tests/data/dist/static/js"
-            MAPGENIE_INJECT_CSS_DIR="${CMAKE_CURRENT_SOURCE_DIR}/tests/data/dist/static/css"
+            MAPGENIE_RESOURCES_PATH="${CMAKE_CURRENT_SOURCE_DIR}/tests/data/dist"
             MAPGENIE_INJECT_HTML_PATH="${CMAKE_CURRENT_SOURCE_DIR}/tests/data/map.html"
             MAPGENIE_INJECT_HTML_PATH_OUT="${CMAKE_CURRENT_SOURCE_DIR}/tests/data/map_out.html"
     )

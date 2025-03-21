@@ -1,8 +1,10 @@
 fn main() {
-    println!("cargo:rerun-if-changed=../src-native/src/main.h");
+    println!("cargo:rerun-if-changed=../src-native/include/*");
 
     let bindings = bindgen::Builder::default()
-        .header("../src-native/src/main.h")
+        .header("../src-native/include/network.h")
+        .header("../src-native/include/app.h")
+        .no_copy(".*")
         .generate()
         .expect("Unable to generate bindings");
 

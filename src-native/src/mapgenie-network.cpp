@@ -164,6 +164,70 @@ CORE_PRIVATE NetworkResponse* core_mapgenie_network_override(const NetworkReques
   if (request->m_parsed_url->path == "/api/v1/user/notes") {
     MapgenieHeadersData headers_data {};
     get_headers_data(request, headers_data);
+
+    switch (request->m_method) {
+      case NETWORK_REQUEST_METHOD_POST: {
+        std::string output;
+
+        mapgenie_data.add_note(
+          headers_data.game_id,
+          headers_data.map_id,
+          request->m_content,
+          output
+        );
+
+        return new NetworkResponse{
+          .status = NETWORK_RESPONSE_STATUS_OK,
+          // ReSharper disable once CppDeprecatedEntity
+          .content = strdup(output.c_str()),
+          // ReSharper disable once CppDeprecatedEntity
+          .headers = strdup("Content-Type: application/json; charset=utf-8"),
+        };
+      }
+
+      case NETWORK_REQUEST_METHOD_PUT: {
+        const auto parts = split(request->m_parsed_url->path, '/');
+        const auto& note_id = parts[parts.size() - 1];
+
+        std::string output;
+
+        mapgenie_data.update_note(
+          headers_data.game_id,
+          headers_data.map_id,
+          note_id,
+          request->m_content,
+          output
+        );
+
+        return new NetworkResponse{
+          .status = NETWORK_RESPONSE_STATUS_OK,
+          // ReSharper disable once CppDeprecatedEntity
+          .content = strdup(output.c_str()),
+          // ReSharper disable once CppDeprecatedEntity
+          .headers = strdup("Content-Type: application/json; charset=utf-8"),
+        };
+      }
+
+      case NETWORK_REQUEST_METHOD_DELETE: {
+        const auto parts = split(request->m_parsed_url->path, '/');
+        const auto& note_id = parts[parts.size() - 1];
+
+        mapgenie_data.delete_note(
+          headers_data.game_id,
+          headers_data.map_id,
+          note_id
+        );
+
+        return new NetworkResponse{
+          .status = NETWORK_RESPONSE_STATUS_NO_CONTENT,
+          .content = nullptr,
+          .headers = nullptr,
+        };
+      }
+
+      default:
+        return &NetworkResponseErrors::get()->error_method_not_allowed;
+    }
   }
   if (starts_with(request->m_parsed_url->path, "/api/local/map-data/") == 1) {
     const auto parts = split(request->m_parsed_url->path, '/');

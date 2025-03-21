@@ -19,7 +19,22 @@ fn main() {
 
     let game_maps_core_dll_in = dst.join("build/Release/game-maps-core.dll").display().to_string();
     let game_maps_core_dll_out = project_path.join("game-maps-core.dll").display().to_string();
+    std::fs::copy(game_maps_core_dll_in, game_maps_core_dll_out).unwrap();
 
+    let game_maps_core_dll_in = dst.join("build/Release/libcurl.dll").display().to_string();
+    let game_maps_core_dll_out = project_path.join("libcurl.dll").display().to_string();
+    std::fs::copy(game_maps_core_dll_in, game_maps_core_dll_out).unwrap();
+
+    let game_maps_core_dll_in = dst.join("build/Release/nghttp2.dll").display().to_string();
+    let game_maps_core_dll_out = project_path.join("nghttp2.dll").display().to_string();
+    std::fs::copy(game_maps_core_dll_in, game_maps_core_dll_out).unwrap();
+
+    let game_maps_core_dll_in = dst.join("build/Release/zlib1.dll").display().to_string();
+    let game_maps_core_dll_out = project_path.join("zlib1.dll").display().to_string();
+    std::fs::copy(game_maps_core_dll_in, game_maps_core_dll_out).unwrap();
+
+    let game_maps_core_dll_in = dst.join("build/Release/zstd.dll").display().to_string();
+    let game_maps_core_dll_out = project_path.join("zstd.dll").display().to_string();
     std::fs::copy(game_maps_core_dll_in, game_maps_core_dll_out).unwrap();
 
     println!("cargo:rustc-link-search=native={}/build/Release", dst.display());

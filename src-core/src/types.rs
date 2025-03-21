@@ -13,4 +13,17 @@ pub trait NetworkResponse {
     fn get_content_type(&self) -> String;
 }
 
-pub type Result<T> = std::result::Result<T, Box<dyn Debug>>;
+#[derive(Debug)]
+pub struct NativeErrorInfo {
+    pub line: u32,
+    pub column: u32,
+    pub file: String,
+    pub message: String,
+}
+
+#[derive(Debug)]
+pub enum Error {
+    NativeError(NativeErrorInfo),
+}
+
+pub type Result<T> = std::result::Result<T, Error>;

@@ -1,14 +1,10 @@
-use std::ffi::CString;
 use std::fmt::Debug;
-use std::result;
 use webview2_com::Microsoft::Web::WebView2::Win32::{
     ICoreWebView2,
     ICoreWebView2WebResourceRequest,
     COREWEBVIEW2_WEB_RESOURCE_CONTEXT_ALL
 };
-use webview2_com::take_pwstr;
 use windows::core::HSTRING;
-use windows_core::{BOOL, PWSTR};
 
 mod types;
 pub use types::*;
@@ -41,23 +37,41 @@ pub unsafe fn override_network(
     uri: &String
 ) -> Option<Box<dyn NetworkResponse>> {
     let request_result = request::build(webview_request, uri);
-    if let Ok(request) = request_result {
-        let res = native::core_network_override(request.to_native());
-        if !res.is_null() {
-            return response::build(res);
+    match request_result {
+        Ok(request) => {
+            let res = native::core_network_override(request.to_native());
+            if !res.is_null() {
+                match response::build(res) {
+                    Ok(result) => {
+                        return Some(result);
+                    }
+                    Err(error) => {
+                        println!("[override_network][response] Uri: {}, Error: {:?}", uri, error);
+                    }
+                }
+            }
+        }
+        Err(error) => {
+            println!("[override_network][request] Uri: {}, Error: {:?}", uri, error);
         }
     }
+
     None
 }
 
 #[inline]
 pub unsafe fn setup(mapgenie_resources_path: &str) {
-    let uri_cstring = CString::new(mapgenie_resources_path)
-        .expect("CString::new failed");
+    let uri_cstring_result = native::string_to_cstring(mapgenie_resources_path);
+    match uri_cstring_result {
+        Ok(uri_cstring) => {
+            let config = native::AppConfig {
+                mapgenie_resources_path: uri_cstring.as_ptr(),
+            };
 
-    let config = native::AppConfig {
-        mapgenie_resources_path: uri_cstring.as_ptr(),
-    };
-
-    native::core_app_config(config);
+            native::core_app_config(config);
+        }
+        Err(error) => {
+            println!("[setup] Error: {:?}", error);
+        }
+    }
 }

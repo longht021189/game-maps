@@ -29,8 +29,15 @@ unsafe fn get_method(
     webview_request: &ICoreWebView2WebResourceRequest
 ) -> types::Result<native::NetworkRequestMethod> {
     let mut method = PWSTR::null();
+
     webview_request.Method(&mut method)
-        .expect("Failed to get method");
+        .map_err(|e| types::Error::NativeError(types::NativeErrorInfo{
+            line: line!(),
+            column: column!(),
+            file: file!().to_string(),
+            message: format!("Get Method Error: {:?}", e)
+        }))?;
+
     let method = take_pwstr(method);
 
     match method.as_str() {
@@ -38,7 +45,12 @@ unsafe fn get_method(
         "PUT" => Ok(native::NetworkRequestMethod_NETWORK_REQUEST_METHOD_PUT),
         "DELETE" => Ok(native::NetworkRequestMethod_NETWORK_REQUEST_METHOD_DELETE),
         "POST" => Ok(native::NetworkRequestMethod_NETWORK_REQUEST_METHOD_POST),
-        _ => Err(Box::new(""))
+        _ => Err(types::Error::NativeError(types::NativeErrorInfo{
+            line: line!(),
+            column: column!(),
+            file: file!().to_string(),
+            message: format!("Method {} isn't supported", method)
+        }))
     }
 }
 
@@ -48,29 +60,54 @@ unsafe fn parse_headers(
     headers_data: &mut Vec<CString>
 ) -> types::Result<()> {
     let headers = webview_request.Headers()
-        .expect("Failed to get header")
+        .map_err(|e| types::Error::NativeError(types::NativeErrorInfo{
+            line: line!(),
+            column: column!(),
+            file: file!().to_string(),
+            message: format!("Get Headers Error: {:?}", e)
+        }))?
         .GetIterator()
-        .expect("Failed to get iterator");
+        .map_err(|e| types::Error::NativeError(types::NativeErrorInfo{
+            line: line!(),
+            column: column!(),
+            file: file!().to_string(),
+            message: format!("Get Headers Iterator Error: {:?}", e)
+        }))?;
 
     let mut has_current = BOOL::default();
 
     headers.HasCurrentHeader(&mut has_current)
-        .expect("Failed to get current header");
+        .map_err(|e| types::Error::NativeError(types::NativeErrorInfo{
+            line: line!(),
+            column: column!(),
+            file: file!().to_string(),
+            message: format!("Check Headers Exists Error: {:?}", e)
+        }))?;
 
     while has_current.as_bool() {
         let mut key = PWSTR::null();
         let mut value = PWSTR::null();
+
         headers.GetCurrentHeader(&mut key, &mut value)
-            .expect("Failed to get asdasdr");
+            .map_err(|e| types::Error::NativeError(types::NativeErrorInfo{
+                line: line!(),
+                column: column!(),
+                file: file!().to_string(),
+                message: format!("Get Header Item Error: {:?}", e)
+            }))?;
 
         let (key, value) = (take_pwstr(key), take_pwstr(value));
         let header_value = format!("{}: {}", key, value);
-        let header_cstring = CString::new(header_value).expect("CString::new failed");
+        let header_cstring = native::string_to_cstring(header_value.as_str())?;
         native::core_network_request_add_header(request, header_cstring.as_ptr());
         headers_data.push(header_cstring);
-
         headers.MoveNext(&mut has_current)
-            .expect("Failed to get asrerwer");
+            .map_err(|e| types::Error::NativeError(types::NativeErrorInfo{
+                line: line!(),
+                column: column!(),
+                file: file!().to_string(),
+                message: format!("Move Next Header Error: {:?}", e)
+            }))?;
     }
 
     Ok(())
@@ -84,14 +121,27 @@ unsafe fn read_content(
         let mut buffer: [u8; 1024] = [0; 1024];
         loop {
             let mut cb_read = 0;
-            let content: IStream = content.cast().expect("");
+            let content: IStream = content.cast()
+                .map_err(|e| types::Error::NativeError(types::NativeErrorInfo{
+                    line: line!(),
+                    column: column!(),
+                    file: file!().to_string(),
+                    message: format!("Cast Error: {:?}", e)
+                }))?;
+
             content
                 .Read(
                     buffer.as_mut_ptr() as *mut _,
                     buffer.len() as u32,
                     Some(&mut cb_read),
                 )
-                .ok().expect("");
+                .ok()
+                .map_err(|e| types::Error::NativeError(types::NativeErrorInfo{
+                    line: line!(),
+                    column: column!(),
+                    file: file!().to_string(),
+                    message: format!("Read Error: {:?}", e)
+                }))?;
 
             if cb_read == 0 {
                 break;
@@ -108,7 +158,7 @@ pub unsafe fn build(
     uri: &String
 ) -> types::Result<WebResourceRequest> {
     let method = get_method(webview_request)?;
-    let uri_cstring = CString::new(uri.as_str()).expect("CString::new failed");
+    let uri_cstring = native::string_to_cstring(uri.as_str())?;
     let request = native::core_network_request_new(uri_cstring.as_ptr(), method);
     let mut headers_data: Vec<CString> = Vec::new();
     parse_headers(request, webview_request, &mut headers_data)?;
@@ -118,7 +168,7 @@ pub unsafe fn build(
         native::NetworkRequestMethod_NETWORK_REQUEST_METHOD_POST |
         native::NetworkRequestMethod_NETWORK_REQUEST_METHOD_PUT => {
             let content = read_content(webview_request)?;
-            let content_cstring_data = CString::new(content).expect("CString::new failed");
+            let content_cstring_data = native::vec_to_cstring(content)?;
             native::core_network_request_add_content(request, content_cstring_data.as_ptr());
             content_cstring = Some(content_cstring_data);
         }

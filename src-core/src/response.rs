@@ -46,26 +46,25 @@ unsafe fn get_content(response: *mut native::NetworkResponse) -> String {
     }
 }
 
-unsafe fn get_content_type(response: *mut native::NetworkResponse) -> String {
+unsafe fn get_content_type(response: *mut native::NetworkResponse) -> types::Result<String> {
     if (*response).headers.is_null() {
-        "".to_string()
+        Ok("".to_string())
     } else {
-        let c_str = CStr::from_ptr((*response).headers);
-        let headers = c_str.to_str().unwrap().to_string().to_lowercase();
+        let headers = native::cstring_to_string((*response).headers)?.to_lowercase();
         let content_type = headers
             .split("\n")
             .find(|line| line.contains("content-type:"))
             .map(|line| line.replace("content-type:", ""))
             .unwrap_or("".to_string());
 
-        content_type.trim().to_string()
+        Ok(content_type.trim().to_string())
     }
 }
 
 pub unsafe fn build(
     response: *mut native::NetworkResponse
-) -> Option<Box<dyn types::NetworkResponse>> {
+) -> types::Result<Box<dyn types::NetworkResponse>> {
     let content = get_content(response);
-    let content_type = get_content_type(response);
-    Some(Box::new(WebResourceResponse { response, content, content_type }))
+    let content_type = get_content_type(response)?;
+    Ok(Box::new(WebResourceResponse { response, content, content_type }))
 }

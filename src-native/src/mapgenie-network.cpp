@@ -67,10 +67,10 @@ CORE_PRIVATE void get_headers_data(const NetworkRequest* request, MapgenieHeader
   const curl_slist *header = request->m_headers;
   while (nullptr != header) {
     if (starts_with(header->data, "X-Map-ID") == 1) {
-      output.game_id = string_to_uint64_ss(header->data + 9);
+      output.map_id = string_to_uint64_ss(header->data + 9);
     }
     if (starts_with(header->data, "X-Game-ID") == 1) {
-      output.map_id = string_to_uint64_ss(header->data + 10);
+      output.game_id = string_to_uint64_ss(header->data + 10);
     }
     header = header->next;
   }
@@ -140,7 +140,8 @@ CORE_PRIVATE NetworkResponse* core_mapgenie_network_override(const NetworkReques
           .status = NETWORK_RESPONSE_STATUS_OK,
           // ReSharper disable once CppDeprecatedEntity
           .content = strdup("{}"),
-          .headers = nullptr,
+          // ReSharper disable once CppDeprecatedEntity
+          .headers = strdup("Content-Type: application/json; charset=utf-8"),
         };
 
       case NETWORK_REQUEST_METHOD_DELETE:
@@ -177,7 +178,8 @@ CORE_PRIVATE NetworkResponse* core_mapgenie_network_override(const NetworkReques
         .status = NETWORK_RESPONSE_STATUS_OK,
         // ReSharper disable once CppDeprecatedEntity
         .content = strdup(output.c_str()),
-        .headers = nullptr,
+        // ReSharper disable once CppDeprecatedEntity
+        .headers = strdup("Content-Type: application/json; charset=utf-8"),
       };
     }
 

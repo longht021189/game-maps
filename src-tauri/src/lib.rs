@@ -2,21 +2,16 @@ use tauri::{Manager, RunEvent};
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
-    let host = if cfg!(dev) {
-        "http://localhost:3000"
-    } else {
-        "https://mapgenie.io"
-    };
+    if cfg!(dev) {
+        let project_dir = std::env::current_dir()
+            .unwrap()
+            .to_string_lossy()
+            .into_owned() + "/../dist";
 
-    println!(">>>>>>>>>> host={}", host);
-
-    let project_dir = std::env::current_dir()
-        // .map_err(|e| format!("Failed to get current dir: {}", e))
-        .unwrap()
-        .to_string_lossy()
-        .into_owned();
-
-    println!(">>>>>>>>>> project_dir={}", project_dir);
+        unsafe {
+            game_maps_core::setup(project_dir.as_str());
+        }
+    }
 
     tauri::Builder::default()
         .setup(|app| {

@@ -39,7 +39,7 @@ CORE_PRIVATE void get_scripts(
         std::string extension = entry.path().extension().string();
         extension == ext
       ) {
-        output += "<script defer src=\"/static/js/" + filename + "\"></script>\n";
+        output += "<script src=\"/static/js/" + filename + "\"></script>\n";
       }
     }
   }

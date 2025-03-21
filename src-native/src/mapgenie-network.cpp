@@ -18,7 +18,7 @@ std::vector<std::string> mapgenie_network_filters = {
   "https://mapgenie.io/*/maps/*",
   "https://mapgenie.io/static/*",
   "https://mapgenie.io/api/local/map-data/*",
-  "https://mapgenie.io/api/v1/user/notes",
+  "https://mapgenie.io/api/v1/user/notes*",
   "https://mapgenie.io/api/v1/user/locations/*"
 };
 

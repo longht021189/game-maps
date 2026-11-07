@@ -1,0 +1,36 @@
+{
+  "name": "game-maps-app",
+  "version": "0.1.0",
+  "private": true,
+  "description": "",
+  "type": "module",
+  "scripts": {
+    "build": "rsbuild build",
+    "build:inject": "rsbuild build --environment inject",
+    "check": "biome check --write",
+    "dev": "rsbuild dev --environment web",
+    "format": "biome format --write",
+    "preview": "rsbuild preview",
+    "tauri": "tauri",
+    "test": "rstest",
+    "test:watch": "rstest --watch"
+  },
+  "license": "MIT",
+  "dependencies": {
+    "@solidjs/web": "^2.0.0-rc.20",
+    "solid-js": "^2.0.0-rc.20"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "2.5.15",
+    "@rsbuild/core": "^2.3.1",
+    "@rsbuild/plugin-solid": "^2.0.0-rc.1",
+    "@rstest/adapter-rsbuild": "^0.12.5",
+    "@rstest/core": "^0.12.5",
+    "@testing-library/dom": "^10.4.2",
+    "@testing-library/jest-dom": "^7.0.1",
+    "@types/node": "^26.6.6",
+    "happy-dom": "^21.0.4",
+    "typescript": "^7.0.2",
+    "@tauri-apps/cli": "^2"
+  }
+}

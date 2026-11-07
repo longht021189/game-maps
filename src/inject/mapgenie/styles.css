@@ -1,0 +1,15 @@
+/* Injected into mapgenie.io pages by `src/entrypoint/http-bodies.ts`. */
+
+/* Ad slots. */
+.billboard,
+#blobby-left {
+  /* biome-ignore lint/complexity/noImportantStyles: must win over the site's own styles. */
+  display: none !important;
+}
+
+/* Room the site keeps for the (hidden) large footer ad below the sidebar lists. */
+#left-sidebar.footer-large #categories,
+#left-sidebar.footer-large #search-results-wrapper {
+  /* biome-ignore lint/complexity/noImportantStyles: must win over the site's own styles. */
+  padding-bottom: 0 !important;
+}

@@ -1,0 +1,247 @@
+# Builds the app for macOS, Windows and Android with the given version, then, once all three
+# succeed, creates the draft GitHub release `v<version>` with the bundles attached. Publishing the
+# draft (by hand) creates the tag `v<version>` on the commit that was built.
+#
+# Release files are kept with the release; `retention-days` only applies to the workflow
+# artifacts.
+#
+# Runs by hand only: Actions → Build → Run workflow (pick the branch, enter the version), or
+# `gh workflow run build.yml --ref dev -f version=1.2.3`.
+#
+# Android signing: with the repository secrets below, the APK is signed; without them, the
+# unsigned APK is attached (it cannot be installed as is).
+#   ANDROID_KEYSTORE_BASE64   base64 of the keystore file (`base64 -i release.jks`)
+#   ANDROID_KEYSTORE_PASSWORD keystore password
+#   ANDROID_KEY_ALIAS         key alias
+#   ANDROID_KEY_PASSWORD      key password (often the keystore password)
+
+name: Build
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: Version to build and release, `X.Y.Z` (tag `vX.Y.Z`)
+        required: true
+        type: string
+
+concurrency:
+  group: build-${{ inputs.version }}
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+defaults:
+  run:
+    # Also on Windows, so the steps share one syntax.
+    shell: bash
+
+env:
+  NODE_VERSION: 24
+  PNPM_VERSION: 12
+  # NDK used locally (see the workspace notes), also used by `tauri android`.
+  NDK_VERSION: 30.0.16248370
+
+jobs:
+  prepare:
+    name: Check the version
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+    steps:
+      - id: version
+        env:
+          INPUT: ${{ inputs.version }}
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          version="${INPUT#v}"
+          # Plain `X.Y.Z`: Windows MSI and Android versionCode reject pre-release suffixes.
+          if ! [[ "$version" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "::error::version must be X.Y.Z, got '$INPUT'"
+            exit 1
+          fi
+          if gh api "repos/${GITHUB_REPOSITORY}/git/ref/tags/v${version}" --silent 2>/dev/null; then
+            echo "::error::tag v${version} already exists"
+            exit 1
+          fi
+          # Also a draft (no tag yet) from an earlier run.
+          if gh release view "v${version}" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            echo "::error::release v${version} already exists (maybe as a draft)"
+            exit 1
+          fi
+          echo "version=${version}" >> "$GITHUB_OUTPUT"
+
+  macos:
+    name: macOS (universal)
+    needs: prepare
+    runs-on: macos-latest
+    env:
+      VERSION: ${{ needs.prepare.outputs.version }}
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+      - uses: actions/setup-node@v5
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: aarch64-apple-darwin,x86_64-apple-darwin
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: src-tauri -> target
+          key: macos
+
+      - run: pnpm install --frozen-lockfile
+      # `beforeBuildCommand` (`pnpm build`) builds the frontend and the init script first.
+      - run: >-
+          pnpm tauri build --target universal-apple-darwin --bundles app,dmg
+          --config "{\"version\":\"${VERSION}\"}"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: game-maps-macos
+          path: src-tauri/target/universal-apple-darwin/release/bundle/dmg/*.dmg
+          if-no-files-found: error
+          retention-days: 7
+
+  windows:
+    name: Windows (x64)
+    needs: prepare
+    runs-on: windows-latest
+    env:
+      VERSION: ${{ needs.prepare.outputs.version }}
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+      - uses: actions/setup-node@v5
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: src-tauri -> target
+          key: windows
+
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm tauri build --bundles nsis,msi --config "{\"version\":\"${VERSION}\"}"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: game-maps-windows
+          path: |
+            src-tauri/target/release/bundle/nsis/*.exe
+            src-tauri/target/release/bundle/msi/*.msi
+          if-no-files-found: error
+          retention-days: 7
+
+  android:
+    name: Android (arm64)
+    needs: prepare
+    runs-on: ubuntu-latest
+    env:
+      VERSION: ${{ needs.prepare.outputs.version }}
+      ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+      ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+      ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+      ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+      - uses: actions/setup-node@v5
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+
+      # Android Gradle Plugin 9 needs JDK 17+.
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: 21
+          cache: gradle
+
+      - uses: android-actions/setup-android@v3
+      - name: Install the NDK
+        run: |
+          sdkmanager --install "ndk;${NDK_VERSION}"
+          echo "NDK_HOME=${ANDROID_HOME}/ndk/${NDK_VERSION}" >> "$GITHUB_ENV"
+
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: aarch64-linux-android
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: src-tauri -> target
+          key: android
+
+      - run: pnpm install --frozen-lockfile
+      # The version also sets the APK's versionName / versionCode.
+      - run: pnpm tauri android build --apk --target aarch64 --config "{\"version\":\"${VERSION}\"}"
+
+      - name: Sign the APK
+        run: |
+          apk=$(find src-tauri/gen/android/app/build/outputs/apk -name '*-unsigned.apk' | head -n 1)
+          mkdir -p "$RUNNER_TEMP/apk"
+          out="$RUNNER_TEMP/apk/game-maps_${VERSION}_android_arm64"
+          if [ -z "$ANDROID_KEYSTORE_BASE64" ]; then
+            echo "::warning::no keystore secrets: the APK is unsigned"
+            cp "$apk" "${out}_unsigned.apk"
+            exit 0
+          fi
+          apksigner=$(ls -d "${ANDROID_HOME}"/build-tools/*/ | sort -V | tail -n 1)apksigner
+          echo "$ANDROID_KEYSTORE_BASE64" | base64 --decode > "$RUNNER_TEMP/release.jks"
+          # Without a separate key password, the keystore password is used.
+          export ANDROID_KEY_PASSWORD="${ANDROID_KEY_PASSWORD:-$ANDROID_KEYSTORE_PASSWORD}"
+          "$apksigner" sign \
+            --ks "$RUNNER_TEMP/release.jks" \
+            --ks-pass env:ANDROID_KEYSTORE_PASSWORD \
+            --ks-key-alias "$ANDROID_KEY_ALIAS" \
+            --key-pass env:ANDROID_KEY_PASSWORD \
+            --out "${out}.apk" \
+            "$apk"
+          rm "$RUNNER_TEMP/release.jks"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: game-maps-android
+          path: ${{ runner.temp }}/apk/*.apk
+          if-no-files-found: error
+          retention-days: 7
+
+  release:
+    name: Release
+    needs: [prepare, macos, windows, android]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    env:
+      VERSION: ${{ needs.prepare.outputs.version }}
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: dist
+          merge-multiple: true
+
+      # A draft: the tag `v<version>` is created on the built commit when it is published.
+      - run: |
+          ls -l dist
+          gh release create "v${VERSION}" dist/* \
+            --repo "$GITHUB_REPOSITORY" \
+            --target "$GITHUB_SHA" \
+            --title "v${VERSION}" \
+            --generate-notes \
+            --draft

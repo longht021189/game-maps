@@ -1,0 +1,47 @@
+[package]
+name = "game-maps-app"
+version = "0.1.0"
+description = "A Tauri App"
+authors = ["you"]
+edition = "2024"
+license = "MIT"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[lib]
+# The `_lib` suffix may seem redundant but it is necessary
+# to make the lib name unique and wouldn't conflict with the bin name.
+# This seems to be only an issue on Windows, see https://github.com/rust-lang/cargo/issues/8519
+name = "game_maps_app_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+tauri = { version = "2", features = [] }
+# Only for `wry::is_http_interception_supported`; resolves to the patched fork (see below).
+wry = { version = "0.57", default-features = false }
+reqwest = { version = "0.13", default-features = false, features = ["rustls", "http2", "system-proxy", "cookies", "gzip", "brotli", "deflate", "zstd"] }
+redb = "4.5.0"
+serde_json = "1.0.154"
+serde = { version = "1.0.229", features = ["derive"] }
+getrandom = "0.3"
+
+# Android: TLS roots for reqwest (see `src/proxy/client.rs`).
+[target.'cfg(target_os = "android")'.dependencies]
+webpki-root-certs = "1"
+
+# Use the wry fork (needed for APIs such as `with_http_interceptor`).
+# A `[patch]` in `.cargo/config.toml` takes precedence over this one, so a local
+# checkout can override it (see the workspace `.cargo/config.toml`).
+[patch.crates-io]
+wry = { git = "https://github.com/longht021189/tauri-apps_wry.git", branch = "main" }
+
+# Read the optimization guideline for more details: https://tauri.app/concept/size/#cargo-configuration
+[profile.release]
+codegen-units = 1
+lto = true
+opt-level = 3
+panic = "abort"
+strip = true

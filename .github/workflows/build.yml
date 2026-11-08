@@ -240,9 +240,12 @@ jobs:
           merge-multiple: true
 
       # A draft: the tag `v<version>` is created on the built commit when it is published.
+      # An artifact with several paths keeps their common parent, so the Windows bundles land in
+      # `dist/nsis/` and `dist/msi/`: attach every file, not the top-level entries.
       - run: |
-          ls -l dist
-          gh release create "v${VERSION}" dist/* \
+          mapfile -t files < <(find dist -type f | sort)
+          printf '%s\n' "${files[@]}"
+          gh release create "v${VERSION}" "${files[@]}" \
             --repo "$GITHUB_REPOSITORY" \
             --target "$GITHUB_SHA" \
             --title "v${VERSION}" \
